@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Draft Your Team — Survivor 51 Fantasy League</title>
+<link rel="icon" href="images/logo.png" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="container">
+    <a class="brand" href="index.html">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2C10 6 6 8 6 13a6 6 0 0012 0c0-3-1-5-2-7 0 2-1 5-2 7 0-3-1-5-2-7z" fill="#ef6a25"/></svg>
+      Survivor 51 Fantasy League
+    </a>
+    <div class="navlinks">
+      <a href="index.html">Home</a>
+      <a href="entry.html" class="active">Enter</a>
+      <a href="leaderboard.html">Leaderboard</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow"><span class="season-label">SURVIVOR 51</span> · DRAFT BOARD</div>
+    <h1>Pick <span class="picks-per-team">five</span>.<br />Lock in.</h1>
+    <p class="muted">Choose your castaways you think can survive the island. Your entry becomes permanent the moment you submit. (Text me if there's a problem, I'll take care of you!)</p>
+    <p class="muted small">Tip: use the dropdowns or tap a castaway card below. Selected castaways are marked so you can build your roster visually.</p>
+  </div>
+</header>
+
+<section id="locked-section" class="hidden">
+  <div class="container" style="max-width:640px;">
+    <div class="panel center">
+      <h2>Drafting is closed</h2>
+      <p class="muted">The entry deadline has passed or entries have been closed, so picks are locked. If you already submitted a team, check the <a href="leaderboard.html">leaderboard</a> for scores. Get your team in before Episode 2 next season loser. Or text Henry for help!</p>
+    </div>
+  </div>
+</section>
+
+<!-- Payment reminder is intentionally near the top so it is easy to find after submission. -->
+<section id="confirmation" class="hidden">
+  <div class="container" style="max-width:640px;">
+    <div class="panel center">
+      <h2>🔥 You're in! 🔥</h2>
+      <p class="muted">Your team is locked.</p>
+      <a class="btn" id="venmo-payment-link" style="margin-top:8px;" target="_blank" rel="noopener"
+         href="https://venmo.com/Henry-Lumbard-1?txn=pay&note=Survivor%2051%20Fantasy%20League%20entry">
+        Pay $10 on Venmo (@Henry-Lumbard-1)
+      </a>
+      <p class="small muted" style="margin-top:20px;">
+        Picks stay hidden until the entry deadline. Check the
+        <a href="leaderboard.html">leaderboard</a> right before Episode 2 to see everyone's teams.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="form-section">
+  <div class="container" style="max-width:640px;">
+    <div id="status" class="hidden"></div>
+
+    <form id="entry-form">
+      <div class="field">
+        <label for="playerName">Your name</label>
+        <input type="text" id="playerName" required placeholder="e.g. Jordan Mattison" />
+        <p class="small muted" style="margin-top:6px;">Used so I know who you are &mdash; not shown on the public leaderboard.</p>
+
+      </div>
+      <div class="field">
+        <label for="teamName">Team name</label>
+        <input type="text" id="teamName" required placeholder="e.g. Not Winning This Year Either Team" />
+      </div>
+      <div class="field">
+        <label for="phone">Cell phone number</label>
+        <input type="tel" id="phone" required placeholder="e.g. 900-867-5309" />
+        <p class="small muted" style="margin-top:6px;">Used to add you to the group text for the season &mdash; not shown on the public leaderboard.</p>
+      </div>
+
+      <div class="hairline"></div>
+      <h3 style="margin-top:20px;">Your <span class="picks-per-team">five</span> castaways</h3>
+      <p class="small muted">Each castaway can only be selected once. The slots update as you make your choices.</p>
+      <p class="small muted center" style="margin:16px 0 18px;">
+        👇 <strong>Player cards are below the dropdowns.</strong> Scroll down to see photos and bios. You can <strong>tap a player card to select them</strong>, or use the <strong>dropdowns</strong> above.
+      </p>
+
+      <div class="pick-grid" id="pick-grid"></div>
+
+      <div style="margin-top:28px;">
+        <button type="submit" class="btn" id="submit-btn">Submit &amp; lock my team</button>
+      </div>
+      <p class="small muted" style="margin:12px 0 0;">After submission you will be sent to the Venmo payment step. The picks cannot be changed.</p>
+    </form>
+  </div>
+</section>
+
+<section id="roster-section" class="tight">
+  <div class="container container-wide">
+    <h2>This season's castaways</h2>
+    <p class="muted small">
+     Tap a card to add or remove that castaway from your team above.
+    </p>
+    <div id="roster-status" class="hidden status-msg" style="margin-top:12px;"></div>
+    <div class="roster-grid" id="roster-grid"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    Survivor 51 Fantasy League &mdash; run by Henry &middot; entry fee $10 via Venmo (@Henry-Lumbard-1)
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/castaways.js"></script>
+<script src="js/season.js"></script>
+<script>
+function initials(name) {
+  return name.replace(/[\u201c\u201d"]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+}
+
+let ACTIVE_CASTAWAYS = SURVIVOR_51_CAST;
+
+function renderRoster() {
+  const grid = document.getElementById("roster-grid");
+  grid.innerHTML = "";
+
+  // Keep the Rizo joke card first so people see it before the real castaways.
+  renderRizoCard(grid);
+
+  ACTIVE_CASTAWAYS.forEach((c) => {
+    const card = document.createElement("div");
+    card.className = "roster-card";
+    card.dataset.id = c.id;
+
+    const photoWrap = document.createElement("div");
+    photoWrap.className = "roster-photo";
+
+    if (c.photo) {
+      const img = document.createElement("img");
+      img.src = c.photo;
+      img.alt = c.name.replace(/[\u201c\u201d]/g, '"');
+      img.loading = "lazy";
+      // If the hotlinked photo ever breaks (source removed/renamed it), fall
+      // back to an initials avatar instead of showing a broken-image icon.
+      img.onerror = function () {
+        photoWrap.innerHTML = `<div class="roster-initials">${initials(c.name)}</div>`;
+      };
+      photoWrap.appendChild(img);
+    } else {
+      photoWrap.innerHTML = `<div class="roster-initials">${initials(c.name)}</div>`;
+    }
+
+    const info = document.createElement("div");
+    info.className = "roster-info";
+    info.innerHTML = `
+      <h3>${c.name}</h3>
+      <p class="roster-meta">Age ${c.age} &middot; ${c.hometown}</p>
+      <p class="roster-occ">${c.occupation}</p>
+    `;
+
+    card.appendChild(info);
+    card.appendChild(photoWrap);
+    grid.appendChild(card);
+  });
+
+}
+
+// Not a real castaway -- a running joke for the group. Styled like a roster
+// card so it sits naturally at the end of the list, but it can't be picked
+// (see the click-wiring in setupForm, which skips .fake-card). Clicking it
+// reveals a reason, rather than adding him to anyone's team.
+const RIZO_REASONS = [
+  "Told the group chat he “basically already won” before the season even aired.",
+  "Once explained the hidden immunity idol rules to a room full of people who have watched every season.",
+  "Refers to strategic gameplay as “what I would have done.”",
+  "Still brings up that one time he almost auditioned for the show.",
+  "Has never once received a torch snuff, and will not let anyone forget it.",
+  "Said he has a foolproof alliance strategy. Unfortunately, nobody else is in the alliance.",
+  "Volunteered to be the camp provider, then remembered he doesn't know how to fish.",
+  "Would absolutely play his Shot in the Dark on Day 1.",
+  "Has already blamed the edit for something that hasn't happened yet.",
+  "Calls himself a “social threat” despite being left on read in the group chat.",
+  "Would find the hidden immunity idol and immediately tell everyone where it is.",
+  "Spent three hours making a fake alliance chart on a whiteboard.",
+  "His strategy is to “lay low” until everyone forgets he's there.",
+  "Would negotiate his vote for a sandwich and still think he won the deal.",
+  "Claims he could beat any Survivor challenge because he watched all the challenge compilations.",
+  "Would form a final-four alliance before the opening credits finish.",
+  "Has a backup speech prepared for every possible Tribal… except the one where he gets voted out.",
+  "Thinks “trust” is a strategy.",
+  "Would accidentally vote himself out and then argue the parchment was confusing.",
+  "Has been practicing his confessional face in the bathroom mirror.",
+  "Says “I’m not here to make friends” immediately after making friends.",
+  "Would find an idol clue and somehow lose it before reading it.",
+  "Already knows exactly who he would vote for at every Tribal Council.",
+  "Would tell Jeff Probst his vote is “a business decision” and then vote based on vibes.",
+  "His master strategy is to “hope everyone else makes bigger mistakes.”",
+  "Would get blindsided and insist it was part of his plan.",
+  "Has a three-step plan: survive, dominate, explain afterward why it was all intentional.",
+  "Would bring an actual PowerPoint to a Tribal Council.",
+  "Claims he's a challenge beast because he once won a backyard cornhole tournament.",
+  "Would spend his entire day searching for an idol that isn't there.",
+  "His alliance has one member: Rizo.",
+  "Would give a 10-minute confessional explaining why his 2–3–1 vote split was genius.",
+  "Somehow manages to be both the biggest threat and the easiest person to forget.",
+  "If voted out, he will immediately request a recount.",
+];
+
+function renderRizoCard(grid) {
+  const card = document.createElement("div");
+  card.className = "roster-card fake-card";
+
+  const photoWrap = document.createElement("div");
+  photoWrap.className = "roster-photo";
+  const img = document.createElement("img");
+  img.src = "images/rizo.jpg";
+  img.alt = "Rizo";
+  photoWrap.appendChild(img);
+  const ring = document.createElement("div");
+  ring.className = "ban-ring";
+  const bar = document.createElement("div");
+  bar.className = "ban-bar";
+  photoWrap.appendChild(ring);
+  photoWrap.appendChild(bar);
+
+  const info = document.createElement("div");
+  info.className = "roster-info";
+  info.innerHTML = `
+    <h3>Rizo</h3>
+    <p class="roster-meta">Not on this season's cast</p>
+    <p class="roster-occ fake-reason">Tap for a reason to vote him off</p>
+  `;
+
+  card.appendChild(info);
+  card.appendChild(photoWrap);
+  grid.appendChild(card);
+
+  const reasonEl = info.querySelector(".fake-reason");
+
+  // Shuffle the reasons once per page load, then reveal them in sequence.
+  // This keeps every click random-looking but guarantees no reason repeats
+  // until all reasons have been shown.
+  let shuffledReasons = [...RIZO_REASONS];
+  let reasonIndex = 0;
+
+  function shuffleReasons() {
+    for (let i = shuffledReasons.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledReasons[i], shuffledReasons[j]] = [shuffledReasons[j], shuffledReasons[i]];
+    }
+    reasonIndex = 0;
+  }
+
+  shuffleReasons();
+
+  card.addEventListener("click", () => {
+    // Never toggle the card off. Every click advances to another reason.
+    if (reasonIndex >= shuffledReasons.length) {
+      shuffleReasons();
+    }
+    reasonEl.textContent = shuffledReasons[reasonIndex++];
+    card.classList.add("revealed");
+  });
+}
+renderRoster();
+
+// Wire the form after live settings have been loaded. so the page is usable without waiting on Google Sheets.
+// The server still enforces the season lock when a submission is posted.
+(async function initEntryPage() {
+  const data = await fetchSeasonStatus().catch(() => ({ settings: LEAGUE, seasonStarted: false }));
+  if (SEASON_DATA_MODE === "live" && data.castaways && data.castaways.length) {
+    const staticById = Object.fromEntries(SURVIVOR_51_CAST.map((c) => [c.id, c]));
+    ACTIVE_CASTAWAYS = data.castaways.map((c) => ({
+      ...(staticById[c.id] || {}),
+      ...c,
+      age: c.age || staticById[c.id]?.age || "",
+      photo: c.photo || staticById[c.id]?.photo || ""
+    }));
+    renderRoster();
+  }
+  applyLeagueSettings(SEASON_DATA_MODE === "static" ? LEAGUE : (data.settings || {}));
+  document.querySelectorAll(".season-label").forEach((el) => el.textContent = LEAGUE.seasonLabel);
+  document.querySelectorAll(".entry-fee").forEach((el) => el.textContent = LEAGUE.entryFee);
+  const paymentLink = document.getElementById("venmo-payment-link");
+  if (paymentLink) {
+    paymentLink.href = getVenmoEntryUrl();
+    paymentLink.textContent = `Pay ${LEAGUE.entryFee} on Venmo (@${LEAGUE.venmoHandle})`;
+  }
+  document.querySelectorAll(".picks-per-team").forEach((el) => el.textContent = String(LEAGUE.picksPerTeam));
+  setupForm();
+
+  if (data.seasonStarted) {
+    document.getElementById("form-section").classList.add("hidden");
+    document.getElementById("locked-section").classList.remove("hidden");
+  }
+})();
+
+function setupForm() {
+const NUM_PICKS = LEAGUE.picksPerTeam;
+const grid = document.getElementById("pick-grid");
+const selects = [];
+
+for (let i = 0; i < NUM_PICKS; i++) {
+  const field = document.createElement("div");
+  field.className = "field";
+  const label = document.createElement("label");
+  label.textContent = `Pick ${i + 1}`;
+  const select = document.createElement("select");
+  select.required = true;
+  select.dataset.index = i;
+  field.appendChild(label);
+  field.appendChild(select);
+  grid.appendChild(field);
+  selects.push(select);
+}
+
+function renderOptions() {
+  const chosen = selects.map((s) => s.value).filter(Boolean);
+  selects.forEach((select) => {
+    const current = select.value;
+    select.innerHTML = '<option value="">Choose a castaway&hellip;</option>';
+    ACTIVE_CASTAWAYS.forEach((c) => {
+      if (chosen.includes(c.id) && c.id !== current) return; // already taken by another slot
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = `${c.name} \u2014 ${c.hometown}`;
+      if (c.id === current) opt.selected = true;
+      select.appendChild(opt);
+    });
+  });
+  syncRosterSelection();
+}
+selects.forEach((s) => s.addEventListener("change", renderOptions));
+renderOptions();
+
+// ---- Roster card click-to-select, kept in sync with the dropdowns ----
+function syncRosterSelection() {
+  const chosen = selects.map((s) => s.value).filter(Boolean);
+  document.querySelectorAll(".roster-card").forEach((card) => {
+    card.classList.toggle("selected", chosen.includes(card.dataset.id));
+  });
+}
+
+function flashRosterStatus(msg) {
+  const el = document.getElementById("roster-status");
+  el.textContent = msg;
+  el.className = "status-msg error";
+  clearTimeout(flashRosterStatus._t);
+  flashRosterStatus._t = setTimeout(() => el.classList.add("hidden"), 2600);
+}
+
+function toggleCastaway(id) {
+  const alreadyIn = selects.find((s) => s.value === id);
+  if (alreadyIn) {
+    alreadyIn.value = "";
+  } else {
+    const emptySlot = selects.find((s) => s.value === "");
+    if (!emptySlot) {
+      flashRosterStatus("Your team is already full \u2014 tap a selected castaway to remove them first.");
+      return;
+    }
+    emptySlot.value = id;
+  }
+  renderOptions();
+}
+
+document.querySelectorAll(".roster-card:not(.fake-card)").forEach((card) => {
+  card.classList.add("clickable");
+  card.setAttribute("role", "button");
+  card.setAttribute("tabindex", "0");
+  card.addEventListener("click", () => toggleCastaway(card.dataset.id));
+  card.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggleCastaway(card.dataset.id);
+    }
+  });
+});
+
+function showStatus(msg, type) {
+  const el = document.getElementById("status");
+  el.textContent = msg;
+  el.className = `status-msg ${type}`;
+}
+
+document.getElementById("entry-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const playerName = document.getElementById("playerName").value.trim();
+  const teamName = document.getElementById("teamName").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const picks = selects.map((s) => s.value);
+
+  if (new Set(picks).size !== NUM_PICKS || picks.includes("")) {
+    showStatus(`Pick ${NUM_PICKS} different castaways before submitting.`, "error");
+    return;
+  }
+  if (!phone) {
+    showStatus("Add a cell phone number so you can be added to the group text.", "error");
+    return;
+  }
+
+  const submitBtn = document.getElementById("submit-btn");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Locking it in\u2026";
+
+  try {
+    const result = await submitEntry({ playerName, teamName, phone, picks });
+    if (result.error) {
+      showStatus(result.error, "error");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit & lock my team";
+      return;
+    }
+
+    document.getElementById("form-section").classList.add("hidden");
+    document.getElementById("confirmation").classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (err) {
+    console.error(err);
+    showStatus("Something went wrong submitting your team. Please try again.", "error");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit & lock my team";
+  }
+});
+}
+</script>
+</body>
+</html>

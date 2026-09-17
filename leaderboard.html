@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Leaderboard — Survivor 51 Fantasy League</title>
+<link rel="icon" href="images/logo.png" />
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  .admin-column { display: none; }
+  .admin-column.revealed { display: table-cell; }
+  .admin-reveal-section { padding-top: 12px; }
+  .payment-reminder { margin-top: 18px; }
+  .payment-reminder .venmo-name { font-size: 1.15em; font-weight: 800; letter-spacing: .02em; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="container">
+    <a class="brand" href="index.html">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C10 6 6 8 6 13a6 6 0 0012 0c0-3-2-4-2-7 0 2-1 3-2 3 0-3-1-5-2-7z" fill="#DB6423"/></svg>
+      Survivor 51 Fantasy League
+    </a>
+    <div class="navlinks">
+      <a href="index.html">Home</a>
+      <a href="entry.html">Enter</a>
+      <a href="leaderboard.html" class="active">Leaderboard</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="eyebrow" id="week-label"><span class="season-label">SURVIVOR 51</span> · LIVE BOARD</div>
+    <h1>Standings</h1>
+    <p class="muted" id="lead-sub">Loading&hellip;</p>
+  </div>
+</header>
+
+<section id="pre-season" class="hidden">
+  <div class="container">
+    <div class="panel center">
+      <h3>Picks are open through the premiere</h3>
+      <p class="muted"><span id="entry-count">0</span> teams have entered so far. Everyone's picks and live scoring will be posted here after the Episode 2 entry deadline on <span id="entry-deadline">September 30, 2026</span>.</p>
+      <a class="btn" href="entry.html">Draft your team</a>
+
+      <div id="payment-reminder" class="payment-reminder panel">
+        <h3>Don't forget your <span id="reminder-entry-fee">$10</span> entry fee</h3>
+        <p class="muted">If you just submitted your team, please send your $10 entry fee via Venmo.</p>
+        <p class="venmo-name">Venmo: <span id="reminder-venmo">@Henry-Lumbard-1</span></p>
+        <a class="btn" id="venmo-link" href="https://venmo.com/u/Henry-Lumbard-1" target="_blank" rel="noopener">Pay via Venmo</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="live-board" class="hidden">
+  <div class="container container-wide">
+    <div class="panel" style="padding:0; overflow:hidden;">
+    <div style="overflow-x:auto;">
+      <table id="standings-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Team</th>
+            <th>Points</th>
+            <th class="admin-column">Max possible</th>
+            <th class="admin-column">Upside</th>
+            <th>Picks</th>
+          </tr>
+        </thead>
+        <tbody id="board-body"></tbody>
+      </table>
+    </div>
+    </div>
+  </div>
+</section>
+
+<section id="cast-pool" class="hidden tight">
+  <div class="torch-band">
+    <div class="container">
+      <h2>The tribe has spoken</h2>
+      <p class="torch-sub">Where every castaway stands, and what each one is worth.</p>
+    </div>
+  </div>
+  <div class="container container-wide" style="padding-top:8px;">
+    <div class="roster-grid" id="cast-roster-grid"></div>
+  </div>
+</section>
+
+<section class="tight admin-reveal-section">
+  <div class="container center">
+    <button type="button" class="btn secondary" id="reveal-admin-btn">Show Max Points &amp; Upside</button>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <span class="season-label">Survivor 51</span> Fantasy League &mdash; run by <span id="commissioner-name">Henry</span> &middot; entry fee <span id="footer-entry-fee">$10</span> via Venmo (<span id="footer-venmo">@Henry-Lumbard-1</span>)
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/castaways.js"></script>
+<script src="js/scoring.js"></script>
+<script src="js/season.js"></script>
+<script>
+async function load() {
+  const data = await fetchLeaderboardData();
+  const loadedSettings = SEASON_DATA_MODE === "static" ? LEAGUE : (data.settings || {});
+  applyLeagueSettings(loadedSettings);
+  document.querySelectorAll(".season-label").forEach((el) => el.textContent = LEAGUE.seasonLabel);
+  const settings = { ...loadedSettings, seasonStarted: data.seasonStarted === true };
+  document.getElementById("reminder-entry-fee").textContent = settings.entryFee;
+  document.getElementById("footer-entry-fee").textContent = settings.entryFee;
+  document.getElementById("reminder-venmo").textContent = "@" + settings.venmoHandle;
+  document.getElementById("footer-venmo").textContent = "@" + settings.venmoHandle;
+  document.getElementById("commissioner-name").textContent = settings.commissionerName;
+  document.getElementById("venmo-link").href = `https://venmo.com/u/${encodeURIComponent(settings.venmoHandle)}`;
+
+  const deadlineEl = document.getElementById("entry-deadline");
+  if (deadlineEl) deadlineEl.textContent = settings.entryDeadlineDisplay || settings.entryDeadline || "";
+  const entries = data.entries || [];
+
+  document.getElementById("entry-count").textContent = entries.length;
+
+  if (!settings.seasonStarted) {
+    document.getElementById("lead-sub").textContent = "Picks reveal before the Episode 2 entry deadline.";
+    document.getElementById("pre-season").classList.remove("hidden");
+    return;
+  }
+
+  document.getElementById("lead-sub").textContent = "Updated as the commissioner logs each Tribal Council.";
+
+  // Load castaways. The sheet is the live source for outcome/name/etc, but it
+  // has no photo column -- photos only live in the static SURVIVOR_51_CAST
+  // list -- so start from that list and layer the sheet's fields on top.
+  // Spreading `c` after `base` only overwrites keys `c` actually has, so
+  // base.photo survives untouched since the sheet data never includes one.
+  const staticById = Object.fromEntries(SURVIVOR_51_CAST.map((c) => [c.id, c]));
+  const castawaysById = {};
+  if (SEASON_DATA_MODE === "live" && data.castaways && data.castaways.length) {
+    data.castaways.forEach((c) => {
+      const base = staticById[c.id] || {};
+      castawaysById[c.id] = {
+        ...base,
+        ...c,
+        age: c.age || base.age || "",
+        photo: c.photo || base.photo || ""
+      };
+    });
+  } else {
+    SURVIVOR_51_CAST.forEach((c) => (castawaysById[c.id] = { ...c, outcome: null }));
+    (data.castaways || []).forEach((c) => {
+      if (castawaysById[c.id]) castawaysById[c.id].outcome = c.outcome;
+    });
+  }
+
+  // Build & sort leaderboard.
+  const rows = entries.map((entry) => {
+    const { current, max, breakdown } = scoreEntry(entry, castawaysById);
+    breakdown.sort((a, b) => a.name.localeCompare(b.name));
+    return { ...entry, current, max, upside: max - current, breakdown };
+  });
+  rows.sort((a, b) => b.current - a.current || b.max - a.max);
+
+  const tbody = document.getElementById("board-body");
+  tbody.innerHTML = "";
+  rows.forEach((r, idx) => {
+    const tr = document.createElement("tr");
+    if (idx === 0) tr.className = "rank-1";
+    const picksHtml = r.breakdown
+      .map((b) => {
+        let cls = "active";
+        if (b.outcome === 20) cls = "winner";
+        else if (b.outcome === 17) cls = "final3";
+        else if (typeof b.outcome === "number") cls = "out";
+        return `<span class="pick-tag ${cls}">${b.name}</span>`;
+      })
+      .join("");
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td><strong>${r.teamName}</strong></td>
+      <td><strong>${r.current}</strong></td>
+      <td class="admin-column"><strong>${r.max}</strong></td>
+      <td class="admin-column">${r.upside > 0 ? `+${r.upside}` : "—"}</td>
+      <td class="picks-cell">${picksHtml}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  renderCastawayCards(castawaysById);
+
+  document.getElementById("live-board").classList.remove("hidden");
+  document.getElementById("cast-pool").classList.remove("hidden");
+
+  document.getElementById("reveal-admin-btn").addEventListener("click", revealAdminColumns);
+}
+
+function initials(name) {
+  return name.replace(/[\u201c\u201d"]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+}
+
+function statusClass(outcome) {
+  if (outcome === 20) return "winner";
+  if (outcome === 17) return "final3";
+  if (typeof outcome === "number") return "out";
+  return "";
+}
+
+function revealAdminColumns() {
+  const pin = window.prompt("Enter Dr. Dre's PIN to reveal Max Points and Upside:");
+  if (pin === "187") {
+    document.querySelectorAll(".admin-column").forEach((el) => {
+      el.classList.add("revealed");
+    });
+    document.getElementById("reveal-admin-btn").textContent = "Max Points & Upside Revealed";
+    document.getElementById("reveal-admin-btn").disabled = true;
+  } else if (pin !== null) {
+    window.alert("Incorrect PIN.");
+  }
+}
+
+function renderCastawayCards(castawaysById) {
+  const grid = document.getElementById("cast-roster-grid");
+  grid.innerHTML = "";
+  Object.values(castawaysById)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach((c) => {
+      const card = document.createElement("div");
+      const cls = statusClass(c.outcome);
+      card.className = "roster-card" + (cls ? ` ${cls}` : "");
+
+      const photoWrap = document.createElement("div");
+      photoWrap.className = "roster-photo";
+      if (c.photo) {
+        const img = document.createElement("img");
+        img.src = c.photo;
+        img.alt = c.name.replace(/[\u201c\u201d]/g, '"');
+        img.loading = "lazy";
+        img.onerror = function () {
+          photoWrap.innerHTML = `<div class="roster-initials">${initials(c.name)}</div>`;
+        };
+        photoWrap.appendChild(img);
+      } else {
+        photoWrap.innerHTML = `<div class="roster-initials">${initials(c.name)}</div>`;
+      }
+
+      const info = document.createElement("div");
+      info.className = "roster-info";
+      const badge = c.outcome !== null && c.outcome !== undefined
+        ? `<p class="roster-badge ${cls}">${describeOutcome(c.outcome)}</p>`
+        : "";
+      info.innerHTML = `
+        <h3>${c.name}</h3>
+        <p class="roster-meta">Age ${c.age} &middot; ${c.hometown}</p>
+        <p class="roster-occ">${c.occupation}</p>
+        ${badge}
+      `;
+
+      card.appendChild(info);
+      card.appendChild(photoWrap);
+      grid.appendChild(card);
+    });
+}
+
+load().catch((err) => {
+  console.error(err);
+  document.getElementById("lead-sub").textContent = "Couldn't load the leaderboard right now.";
+});
+</script>
+</body>
+</html>

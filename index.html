@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Survivor 51 Fantasy League</title>
+<meta property="og:title" content="Survivor 51 Fantasy League" />
+<meta property="og:description" content="Pick 5 castaways, lock in your team, and compete for bragging rights. Entry: $10" />
+<meta property="og:image" content="https://outwitoutplayoutpick.com/images/logo.png" />
+<meta property="og:url" content="https://outwitoutplayoutpick.com" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="images/logo.png" />
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  .simple-home-hero {
+    padding: 54px 0 34px;
+    background: linear-gradient(180deg, rgba(3,20,27,.98), rgba(2,11,17,.98));
+    border-bottom: 1px solid var(--line);
+    text-align: center;
+  }
+  .simple-home-hero .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .simple-home-logo {
+    display: block;
+    width: min(680px, 88vw);
+    height: auto;
+    margin: 0 auto 22px;
+  }
+  .simple-home-hero .premiere-countdown {
+    width: min(760px, 94vw);
+    margin-top: 4px;
+  }
+  .home-entry-section {
+    padding-top: 28px;
+  }
+  .home-entry-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+<nav class="topnav">
+  <div class="container">
+    <a class="brand" href="index.html" aria-label="Survivor 51 Fantasy League home">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2C10 6 6 8 6 13a6 6 0 0012 0c0-3-1-5-2-7 0 2-1 3-2 3 0-3-1-5-2-7z" fill="#ef6a25"/></svg>
+      <span class="season-label">Survivor 51</span> Fantasy League
+    </a>
+    <div class="navlinks">
+      <a href="index.html" class="active">Home</a>
+      <a href="entry.html">Enter</a>
+      <a href="leaderboard.html">Leaderboard</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <section class="simple-home-hero" aria-label="Survivor 51 Fantasy League">
+    <div class="container">
+      <img class="simple-home-logo" src="images/logo.png" alt="Survivor 51 official logo" />
+      <div class="poster-caption premiere-countdown" aria-live="polite">
+        <div class="countdown-time" id="premiere-countdown">Loading countdown…</div>
+        <div class="countdown-date"><span id="premiere-display">Wednesday, September 23 · 8:00 PM ET</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="eyebrow" style="color:var(--gold);">THE GAME</div>
+      <h1>Pick <span class="picks-per-team">5</span> castaways.<br />One winning team.</h1>
+      <p class="muted" style="font-size:1.08rem; max-width:700px;">Watch the premiere, then choose five <span class="season-label">Survivor 51</span> castaways before Episode 2. When one of your players gets voted out, you collect points based on how long they survived.</p>
+      <div class="hero-stats">
+        <div class="stat"><span class="num">21</span><span class="label">Castaways to choose from</span></div>
+        <div class="stat"><span class="num picks-per-team">5</span><span class="label">Picks per team</span></div>
+        <div class="stat"><span class="num entry-fee">$10</span><span class="label">Entry fee</span></div>
+        <div class="stat"><span class="num">∞</span><span class="label">Bragging rights!</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tight">
+    <div class="container">
+      <div class="panel">
+        <div class="eyebrow" style="color:var(--ember);">THE RULES</div>
+        <h2>How the points work</h2>
+        <p class="muted">Every castaway you draft has one chance to earn points for your team. The earlier they're voted out, the fewer points you get — so you're looking for players who can survive deep into the game.</p>
+        <div class="scoreboard" style="margin-top:24px;">
+          <div class="row"><span class="rule">Voted out in week <em>N</em></span><span class="val">N points</span></div>
+          <div class="row"><span class="rule">Survives till the final three (non-winner)</span><span class="val">17 points</span></div>
+          <div class="row"><span class="rule">Named Sole Survivor!</span><span class="val">20 points</span></div>
+        </div>
+        <p class="small muted" style="margin:14px 0 0;">The winner earns <strong>20 points total</strong> (Not 17 + 20). Only the overall winning team receives the prize money.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-entry-section">
+    <div class="container">
+      <div class="panel">
+        <div class="eyebrow" style="color:var(--gold);">YOUR MISSION</div>
+        <h2>Pick. Lock. Watch.</h2>
+        <ol class="muted">
+          <li>Watch the premiere, then make your five picks before Episode 2.</li>
+          <li>Your entry is locked immediately after submission.</li>
+          <li>Send the <strong class="entry-fee">$10</strong> entry fee to <strong>@Henry-Lumbard-1</strong> on Venmo.</li>
+          <li>Once the second episode begins, everyone's picks are revealed and the leaderboard comes alive.</li>
+        </ol>
+        <p class="small muted" style="margin-bottom:0;">Entries close at <span id="entry-deadline">8:00 PM ET on September 30, 2026</span>, before Episode 2.</p>
+        <div class="home-entry-actions">
+          <a class="btn" href="entry.html">Enter Your Team</a>
+          <a class="btn secondary" href="leaderboard.html">View Leaderboard</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="container"><span class="season-label">Survivor 51</span> Fantasy League</div></footer>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/season.js"></script>
+<script src="js/countdown.js"></script>
+<script>
+(async function initHome() {
+  const settings = await loadLeagueSettings();
+  document.querySelectorAll(".season-label").forEach((el) => el.textContent = settings.seasonLabel);
+  document.querySelectorAll(".entry-fee").forEach((el) => el.textContent = settings.entryFee);
+  document.querySelectorAll(".picks-per-team").forEach((el) => el.textContent = settings.picksPerTeam);
+  const deadline = settings.entryDeadlineDisplay || settings.entryDeadline;
+  const premiere = settings.premiereDisplay || settings.premiereDate;
+  const deadlineEl = document.getElementById("entry-deadline");
+  const premiereEl = document.getElementById("premiere-display");
+  if (deadlineEl) deadlineEl.textContent = deadline;
+  if (premiereEl) premiereEl.textContent = premiere;
+})();
+</script>
+</body>
+</html>
